@@ -1,3 +1,9 @@
+'''
+This script has been written to obtain the velocity dataset when the Intel RealSense D455 is mounted on the wheelchair and moved around. The dataset is going to be used 
+in an RL Model in development.
+Author: Antareep Singha
+Date: 12/02/2024
+'''
 import websocket
 import json
 from datetime import datetime
