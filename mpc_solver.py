@@ -20,7 +20,9 @@ class SolverAcados:
         dt: float,
         N: int,
     ):
-
+        num_obs = 1  # Number of Obstacles
+        obs_param = ca.SX.sym("obs", num_obs, 1)
+        con_expr = ca.SX.sym("con_expr", num_obs, 1)
         self.nx = x.shape[0]
         self.nu = u.shape[0]
 
@@ -39,6 +41,13 @@ class SolverAcados:
         model.x = x
         model.xdot = xdot
         model.u = u
+        # p_obs = [obs_param[2 * k : 2 * (k + 1)] for k in range(0, num_obs)]
+        # for i in range(0, num_obs):
+        #     dist = x[0:2] - p_obs[i]
+        #     con_expr[i] = ca.sqrt(ca.sumsqr(dist))
+        # model.con_h_expr = con_expr
+        # model.con_h_expr_e = con_expr
+        # model.p = obs_param
         model.name = "robot"
 
         self.model = model
@@ -60,12 +69,35 @@ class SolverAcados:
         )
         ocp.model.cost_expr_ext_cost_e = (x - xs).T @ Q @ (x - xs)
 
-        # set constraints
-        Fmax = 80
-        ocp.constraints.lbu = np.array([-Fmax])
-        ocp.constraints.ubu = np.array([+Fmax])
-        ocp.constraints.idxbu = np.array([0])
+        # SET CONSTRAINTS
 
+        """
+        Velocity Constraints
+        """
+        # Input Constraints
+        min_forward_velocity = float(-10.0)
+        max_forward_velocity = float(15.0)
+        min_angular_velocity = float(-30.0)
+        max_angular_velocity = float(20.0)
+        ocp.constraints.lbu = np.array(
+            [min_forward_velocity, min_angular_velocity]
+        )  # [min_forward_velocity,min_angular_velocity]
+        ocp.constraints.ubu = np.array(
+            [max_forward_velocity, max_angular_velocity]
+        )  # [max_forward_velocity,max_angular_velocity]
+        ocp.constraints.idxbu = np.array(range(2))
+
+        # Obstacle Avoidance Constrainsts
+        # ocp.dims.np = 2
+        # obs_radius = np.array([5.0])
+        # print("np=", ocp.dims.np)
+        # ocp.parameter_values = np.zeros((num_obs,))  # Initialize Parameters
+        # ocp.constraints.lh = obs_radius
+        # ocp.constraints.uh = 1e2 * np.ones((num_obs,))
+        # ocp.constraints.lh_e = obs_radius
+        # ocp.constraints.uh_e = 1e2 * np.ones((num_obs,))
+
+        # Set Initial State
         ocp.constraints.x0 = np.array([2, 2, 0])
 
         # set options

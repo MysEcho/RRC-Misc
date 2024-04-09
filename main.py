@@ -5,13 +5,26 @@ from model import MPC_Parameters, Robot_Model, setup_robot_model_equations
 import time
 from integrators import RK4Integrator
 from mpc_solver import SolverAcados
-from utils import plot_robot
+from utils import plot_robot, draw_path
+import matplotlib.pyplot as plt
+from draw_utils import draw
+
+
+def not_goal_state(x, y) -> bool:
+    x_final = MPC_Parameters.x_ref[0]
+    y_final = MPC_Parameters.x_ref[1]
+    if x_final - x < 0.11 and y_final - y < 0.1:
+        return False
+    else:
+        return True
 
 
 def simulate_closed_loop(integrator_plant, mpc_solver, x0: np.ndarray, Nsim: int):
 
     nx = mpc_solver.nx
     nu = mpc_solver.nu
+    x = 6
+    y = 11
 
     X = np.ndarray((Nsim + 1, nx))
     U = np.ndarray((Nsim, nu))
@@ -22,6 +35,9 @@ def simulate_closed_loop(integrator_plant, mpc_solver, x0: np.ndarray, Nsim: int
     X[[0]] = x_current
 
     start = time.time()
+    # plt.scatter(x, y, marker="x", color="r")
+    i = 0
+    status = True
 
     for i in range(Nsim):
 
@@ -31,6 +47,11 @@ def simulate_closed_loop(integrator_plant, mpc_solver, x0: np.ndarray, Nsim: int
         x_current = x_next
         X[[i + 1], :] = x_next
         U[[i], :] = u_current.T
+        print(x_next)
+        # status = not_goal_state(x_next[0][0], x_next[0][1])
+        # print(status)
+        # i = i + 1
+        # draw_path(x_next[0][0], x_next[0][1])
 
     closed_loop_cost += mpc_solver.eval_terminal_cost(x_current)
     simulation_time = time.time() - start
@@ -39,7 +60,7 @@ def simulate_closed_loop(integrator_plant, mpc_solver, x0: np.ndarray, Nsim: int
 
 
 def main():
-    Nsim = 20
+    Nsim = 50
     N = 15
     dt = 0.041
 
@@ -47,7 +68,7 @@ def main():
     xs = params.x_ref
     us = params.u_ref
 
-    x0 = np.array([2, 2, 0])
+    x0 = np.array([0, 0, np.pi / 3])
 
     x, u, xdot, f = setup_robot_model_equations(params)
     Q = 2 * np.diag([5, 5, 0.1])
@@ -73,7 +94,9 @@ def main():
     timings_all.append(simulation_time)
     print(X_all)
 
+    # draw_path(dt, X_all, U_all, xs)
     plot_robot(dt, X_all, U_all, labels_all)
+    # draw(X_all)
 
 
 if __name__ == "__main__":

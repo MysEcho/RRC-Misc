@@ -19,6 +19,13 @@ from matplotlib import cm
 # latexify()
 
 
+def draw_circle(x, y, radius):
+    th = np.arange(0, 2 * np.pi, 0.01)
+    xunit = radius * np.cos(th) + x
+    yunit = radius * np.sin(th) + y
+    return xunit, yunit
+
+
 def plot_robot(
     dt,
     X_list,
@@ -203,4 +210,29 @@ def plot_cstr_iterates(
         plt.savefig(fig_filename, bbox_inches="tight", transparent=True)
         print(f"\nstored figure in {fig_filename}")
 
+    plt.show()
+
+
+def draw_path(dt, X_list, U_list, xs):
+    nx = X_list[0].shape[1]
+
+    Nsim = U_list[0].shape[0]
+
+    ts = dt * np.arange(0, Nsim + 1)
+    for i in range(nx):
+        for X in X_list:
+            if i == 0:
+                x_cord = X[:, i]
+            if i == 1:
+                y_cord = X[:, i]
+    plt.xlim(-1, 5)
+    plt.ylim(-1, 5)
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Path")
+    for i in range(50):
+        # plt.scatter(xs[0], xs[1], marker="X", color="red", s=25)
+        plt.plot(x_cord[i], y_cord[i], "o", color="red")
+        plt.pause(0.4)
+        plt.cla()
     plt.show()
